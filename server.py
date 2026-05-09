@@ -11,7 +11,7 @@ app = FastAPI(title="Video Merger API")
 UPLOAD_DIR = "temp_videos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {"status": "online", "message": "Video Merger API is running"}
 

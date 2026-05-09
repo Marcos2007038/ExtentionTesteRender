@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Merger API Tester</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --card: #18181b;
+            --border: #27272a;
+            --text: #fafafa;
+            --text-muted: #71717a;
+            --primary: #fafafa;
+            --primary-hover: #e4e4e7;
+            --accent: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        input[type="text"], 
+        input[type="file"] {
+            width: 100%;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background-color: var(--border);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            font-size: 14px;
+            display: none;
+            text-align: center;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #downloadLink {
+            display: block;
+            margin-top: 15px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Video Merger Tester</h1>
+    <p class="subtitle">Teste sua API do Railway em tempo real</p>
+
+    <div class="input-group">
+        <label>URL da API (Railway)</label>
+        <input type="text" id="apiUrl" placeholder="https://seu-projeto.up.railway.app">
+    </div>
+
+    <div class="input-group">
+        <label>Vídeo Intro (Começo)</label>
+        <input type="file" id="introFile" accept="video/*">
+    </div>
+
+    <div class="input-group">
+        <label>Vídeo Corpo (Base)</label>
+        <input type="file" id="bodyFile" accept="video/*">
+    </div>
+
+    <button id="btnMerge">Unir Vídeos agora</button>
+
+    <div id="statusBox" class="status">
+        <span id="statusContent">Aguardando...</span>
+        <a id="downloadLink" style="display: none;">⬇️ Baixar Vídeo Pronto</a>
+    </div>
+</div>
+
+<script>
+    const btnMerge = document.getElementById('btnMerge');
+    const statusBox = document.getElementById('statusBox');
+    const statusContent = document.getElementById('statusContent');
+    const downloadLink = document.getElementById('downloadLink');
+
+    btnMerge.addEventListener('click', async () => {
+        const apiUrl = document.getElementById('apiUrl').value.trim();
+        const introFile = document.getElementById('introFile').files[0];
+        const bodyFile = document.getElementById('bodyFile').files[0];
+
+        if (!apiUrl || !introFile || !bodyFile) {
+            alert('Por favor, preencha a URL e selecione os dois vídeos.');
+            return;
+        }
+
+        // Limpar estados
+        statusBox.style.display = 'block';
+        statusContent.innerHTML = '<div class="spinner"></div> Processando no Railway...';
+        btnMerge.disabled = true;
+        downloadLink.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('intro', introFile);
+        formData.append('body', bodyFile);
+
+        try {
+            // Garante que a URL termina com /merge
+            const fullUrl = apiUrl.endsWith('/merge') ? apiUrl : `${apiUrl.replace(/\/$/, '')}/merge`;
+
+            const response = await fetch(fullUrl, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const videoUrl = URL.createObjectURL(blob);
+                
+                statusContent.innerText = '✅ Sucesso! Seu vídeo está pronto.';
+                downloadLink.href = videoUrl;
+                downloadLink.download = 'video_final_mesclado.mp4';
+                downloadLink.style.display = 'block';
+            } else {
+                const errorData = await response.json();
+                statusContent.innerText = '❌ Erro: ' + (errorData.error || 'Falha no servidor');
+            }
+        } catch (err) {
+            statusContent.innerText = '❌ Erro de Conexão: ' + err.message;
+        } finally {
+            btnMerge.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>
