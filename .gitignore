@@ -1,0 +1,17 @@
+# Binários pesados do Windows (não necessários no Railway)
+ffmpeg.exe
+ffprobe.exe
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Build e Dist
+build/
+dist/
+*.spec
+
+# Temporários de processamento
+temp_videos/
